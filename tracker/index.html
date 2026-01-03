@@ -68,11 +68,19 @@
     <div id="root"></div>
 
     <!-- App Logic -->
+    <script type="text/babel" data-presets="env,react">
+        // Inject a global variable to help app.js know its path
+        window.APP_BASE_PATH = window.location.pathname;
+    </script>
     <script type="text/babel" data-presets="env,react" src="app.js"></script>
     <script>
         window.addEventListener('load', () => {
             if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('sw.js').catch(err => {
+                const swPath = window.location.pathname.endsWith('/') 
+                    ? window.location.pathname + 'sw.js'
+                    : window.location.pathname + '/sw.js';
+                
+                navigator.serviceWorker.register(swPath.replace('//', '/')).catch(err => {
                     console.log('ServiceWorker registration failed: ', err);
                 });
             }
