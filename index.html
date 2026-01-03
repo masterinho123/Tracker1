@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Habit Tracker - Sync</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Recharts -->
+    <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    
+    <!-- Supabase for direct sync (GitHub Pages) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Custom Config for Tailwind to match the look -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gray: {
+                            50: '#f9fafb',
+                            100: '#f3f4f6',
+                            200: '#e5e7eb',
+                            300: '#d1d5db',
+                            400: '#9ca3af',
+                            500: '#6b7280',
+                            600: '#4b5563',
+                            700: '#374151',
+                            800: '#1f2937',
+                            900: '#111827',
+                        },
+                        green: {
+                            400: '#4ade80',
+                            500: '#22c55e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for horizontal scrolling if needed */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        body {
+            background: radial-gradient(1200px 600px at 20% 10%, #0b1220 0%, #0f172a 60%, #0a0f1a 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <!-- App Logic -->
+    <script type="text/babel" data-presets="env,react">
+        // Inject a global variable to help app.js know its path
+        window.APP_BASE_PATH = window.location.pathname;
+    </script>
+    <script type="text/babel" data-presets="env,react" src="app.js"></script>
+    <script>
+        window.addEventListener('load', () => {
+            if ('serviceWorker' in navigator) {
+                const swPath = window.location.pathname.endsWith('/') 
+                    ? window.location.pathname + 'sw.js'
+                    : window.location.pathname + '/sw.js';
+                
+                navigator.serviceWorker.register(swPath.replace('//', '/')).catch(err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            }
+        });
+    </script>
+    <link rel="manifest" href="manifest.json">
+</body>
+</html>
