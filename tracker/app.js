@@ -279,18 +279,22 @@ const ProgressBar = ({ value, max, colorClass = "bg-green-500", height = "h-2" }
     );
 };
 
-const Header = ({ totalHabits, completedHabits, totalPossible, currentDate, onNext, onPrev, onNextYear, onPrevYear, onExport, onImportClick, onShare, syncCode, setSyncCode, syncStatus, syncError, apiBase, setApiBase }) => {
+const Header = ({ totalHabits, completedHabits, totalPossible, currentDate, onNext, onPrev, onNextYear, onPrevYear, onExport, onImportClick, onShare, syncCode, setSyncCode, syncStatus, syncError, apiBase, setApiBase, supabaseConfig, setSupabaseConfig }) => {
     const progress = totalPossible > 0 ? (completedHabits / totalPossible) * 100 : 0;
     const monthName = getMonthName(currentDate.getFullYear(), currentDate.getMonth());
     const year = currentDate.getFullYear();
     
     const changeApiBase = () => {
         if (apiBase === 'supabase://') {
-            const url = prompt("Supabase URL:", supabaseConfig.url);
+            const url = prompt("Supabase URL:", supabaseConfig.url || '');
             if (url === null) return;
-            const key = prompt("Supabase Anon Key:", supabaseConfig.key);
+            const key = prompt("Supabase Anon Key:", supabaseConfig.key || '');
             if (key === null) return;
-            setSupabaseConfig({ url, key });
+            
+            const newConfig = { url: url.trim(), key: key.trim() };
+            setSupabaseConfig(newConfig);
+            localStorage.setItem('tracker_supabase_config', JSON.stringify(newConfig));
+            
             if (confirm("Vuoi cambiare modalità di sync? Clicca OK per inserire un URL o Annulla per restare su Supabase.")) {
                 const newBase = prompt("Inserisci l'URL del backend:", '');
                 if (newBase !== null) {
@@ -1180,6 +1184,9 @@ const App = () => {
                     if (error && error.code !== 'PGRST116') throw error;
                     srv = data ? data.state : { habits: [], mentalState: { logs: {} }, updatedAt: 0 };
                 } else {
+                    if (apiBase === 'supabase://') {
+                        throw new Error("Supabase non configurato. Clicca sul pallino per impostare URL e Key.");
+                    }
                     let baseUrl = apiBase || '';
                     if (!baseUrl && window.location.hostname.includes('netlify.app')) {
                         baseUrl = '/.netlify/functions/sync';
@@ -1243,7 +1250,7 @@ const App = () => {
         };
         fetchServer();
         return () => { cancelled = true; };
-    }, [syncCode, apiBase]);
+    }, [syncCode, apiBase, supabaseClient]);
 
     useEffect(() => {
         if (!syncCode) return;
@@ -1268,6 +1275,9 @@ const App = () => {
                         }, { onConflict: 'code' });
                     if (error) throw error;
                 } else {
+                    if (apiBase === 'supabase://') {
+                        throw new Error("Supabase non configurato.");
+                    }
                     let baseUrl = apiBase || '';
                     if (!baseUrl && window.location.hostname.includes('netlify.app')) {
                         baseUrl = '/.netlify/functions/sync';
@@ -1314,6 +1324,7 @@ const App = () => {
                     if (error && error.code !== 'PGRST116') throw error;
                     srv = data ? data.state : null;
                 } else {
+                    if (apiBase === 'supabase://') return; // Skip if not configured
                     let baseUrl = apiBase || '';
                     if (!baseUrl && window.location.hostname.includes('netlify.app')) {
                         baseUrl = '/.netlify/functions/sync';
@@ -1340,7 +1351,7 @@ const App = () => {
             } catch {}
         }, 3000);
         return () => clearInterval(interval);
-    }, [updatedAt, syncCode, apiBase]);
+    }, [updatedAt, syncCode, apiBase, supabaseClient]);
     useEffect(() => {
         if (shareOpen && shareShowFull) {
             const QR = window.QRCode;
@@ -1576,6 +1587,8 @@ const App = () => {
                 syncError={syncError}
                 apiBase={apiBase}
                 setApiBase={setApiBase}
+                supabaseConfig={supabaseConfig}
+                setSupabaseConfig={setSupabaseConfig}
             />
             {shareOpen && (
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={() => setShareOpen(false)}>
